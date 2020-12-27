@@ -1,5 +1,6 @@
 """
     Forward Calculation
+    Batch Processing
 """
 import torch
 import torch.nn as nn
@@ -27,7 +28,8 @@ class Network(nn.Module):
 
     def forward(self,t):
         t = F.relu(self.conv1(t))
-        t = F.max_pool2d(t, kernel_size=2, stride=2)
+        # Max pool = pool out the max value at every location
+        t = F.max_pool2d(t, kernel_size=2, stride=2) # Max pool 2d = filter has size of 2, but also the stride of 2
 
         t = F.relu(self.conv2(t))
         t = F.max_pool2d(t, kernel_size=2, stride=2)
@@ -42,12 +44,47 @@ class Network(nn.Module):
 torch.set_grad_enabled(False)
 
 network = Network()
-image, label = next(iter(train_set))
+# image, label = next(iter(train_set))
+#
+# # Turn the image into single image batch size
+# print(image.unsqueeze(0).shape)
+#
+# pred = network(image.unsqueeze(0))
+# print(pred)
+# print(pred.argmax(dim=1)) # Provide discrete value, if we want to output prob, use softmax
+# print(label)
 
-# Turn the image into single image batch size
-print(image.unsqueeze(0).shape)
+# Batch Processing
+data_loader = torch.utils.data.DataLoader(
+    train_set,
+    batch_size = 10
+)
 
-pred = network(image.unsqueeze(0))
+batch = next(iter(data_loader)) # iter make data into stream of node pair that you can iterate and grab adata
+images, labels = batch
+print(images.shape)
+print(labels.shape)
+
+pred = network(images)
 print(pred)
-print(pred.argmax(dim=1)) # Provide discrete value, if we want to output prob, use softmax
-print(label)
+print("The predictions are: ",pred.argmax(dim=1))
+print("The labels are: ", labels)
+print("Compare: ", pred.argmax(dim=1).eq(labels))
+print("Total number of equal: ", pred.argmax(dim=1).eq(labels).sum())
+
+# How to calculate the output of the CNN?
+"""
+    nxn input
+    fxf fileter
+    padding p and stride s
+    output size O = [(n-f+2p)/s] + 1 => Calculate the height and width output of the cnn
+    => This is how we calculate the maxpool 12*4*4
+    
+    Say we have input of 28*28
+    conv1 (5x5) O = [(28-5)+0]/1 + 1 = 24
+    maxpool2D (2x2) O = [(24-2) + 0]/2 + 1 = 12
+    conv2 (5x5) O = [(12-5)+0]/1 + 1 = 8
+    maxpool2D (2x2) O = [(8-2) + 0]/2 + 1 = 4 => 4x4  
+"""
+for name, layer in network.named_parameters():
+    print(name, "\t\t", layer.shape)

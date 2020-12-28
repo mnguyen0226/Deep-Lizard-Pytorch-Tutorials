@@ -30,6 +30,10 @@ torch.set_grad_enabled(True)
 from torch.utils.tensorboard import SummaryWriter  # Work with tensorboard
 from itertools import product
 
+# Packages for Training Loop Run Builder
+from collections import OrderedDict
+from collections import namedtuple
+
 """
     How to use Tensorboard?
     Terminal: ls .\runs\
@@ -82,6 +86,25 @@ class Network(nn.Module):
 
         return t
 
+# Step 10: Create a Run Builder Class: contain params that set the run
+class RunBuilder():
+    @staticmethod # Since get_rus is static we can call it using the class itself
+    def get_runs(params):
+        # Create a tuple subclass call Run taking in Class name and field name
+        Run = namedtuple('Run', params.keys())
+
+        runs = []
+        for v in product(*params.values()): # create a Cartesian product and return an ordered pairs that define our run
+            runs.append(Run(*v)) # use * to tell the constructor to accept the tuple values as argument rather than the tuple itself
+        return runs
+
+# List of params that we want to try out
+params = OrderedDict(
+    lr = [0.01, 0.001],
+    batch_size = [1000, 10000]
+)
+
+runs = RunBuilder.get_runs(params)
 
 # Import training set:
 train_set = torchvision.datasets.FashionMNIST(
@@ -92,22 +115,27 @@ train_set = torchvision.datasets.FashionMNIST(
 )
 
 # Training Process
-# For Cartesian Product so we can run multiple option parallelly to maximize usage of TensorBoard
-parameters = dict(
-    lr = [0.01, 0.001],
-    batch_size = [100,1000],
-    shuffle = [True, False]
-)
-param_values = [v for v in parameters.values()]
-for lr, batch_size, shuffle in product(*param_values): # * is a special way Python unpack a list into set of arguments
-    comment = f' batch_size={batch_size} lr={lr} shuffle={shuffle}'
+# # For Cartesian Product so we can run multiple option parallelly to maximize usage of TensorBoard
+# parameters = dict(
+#     lr = [0.01, 0.001],
+#     batch_size = [100,1000],
+#     shuffle = [True, False]
+# )
+# param_values = [v for v in parameters.values()]
+# for lr, batch_size, shuffle in product(*param_values): # * is a special way Python unpack a list into set of arguments
+#    comment = f' batch_size={batch_size} lr={lr} shuffle={shuffle}'
+
+
+# Instead of unpacking like above, we can jsut call the RunBuilder function
+for run in RunBuilder.get_runs(params):
+    comment = f' --{run}'
 
     network = Network()
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=run.batch_size, shuffle=True)
 
     # Update the weight using optimizer SGD or Adam
-    optimizer = optim.Adam(network.parameters(), lr=lr)
+    optimizer = optim.Adam(network.parameters(), lr=run.lr)
 
     # Step 9: Add in Tensorboard #########
     images, labels = next(iter(train_loader))
@@ -135,7 +163,7 @@ for lr, batch_size, shuffle in product(*param_values): # * is a special way Pyth
             # Update weights
             optimizer.step()
 
-            total_loss += loss.item() * batch_size
+            total_loss += loss.item() * run.batch_size
             total_correct += get_num_correct(preds, labels)
 
         ######### tb: add in scalar value: loss, correct, accuracy, and changing histogram of bias, weight, and gradient

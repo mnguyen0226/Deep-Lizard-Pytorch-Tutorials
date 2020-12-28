@@ -25,7 +25,7 @@ import numpy as np
 
 # 2/ Reshaping
 # Rank = number of dimention in a matrix
-#a = [1,2,3,4,5,6]
+# a = [1,2,3,4,5,6]
 # t = torch.tensor(a)
 # t1 = t.reshape(3,2)
 # print(t1)
@@ -157,7 +157,7 @@ import numpy as np
 # print(t3)
 
 # ARGMAX returns the index of the largest elements in the tensor#################################################################
-t = torch.tensor([[1,2,3],[100,2,2]])
+t = torch.tensor([[1, 2, 3], [100, 2, 2]])
 print(t.flatten())
 print(f"The largest number is {t.max()} at position {t.argmax()}")
 #################################################################

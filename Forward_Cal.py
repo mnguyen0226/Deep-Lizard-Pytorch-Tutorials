@@ -10,11 +10,12 @@ import torchvision
 import torchvision.transforms as transforms
 
 train_set = torchvision.datasets.FashionMNIST(
-    root='./data/FashionMNIST',
-    train = True,
-    download= True,
-    transform=transforms.Compose([transforms.ToTensor()])
+    root="./data/FashionMNIST",
+    train=True,
+    download=True,
+    transform=transforms.Compose([transforms.ToTensor()]),
 )
+
 
 class Network(nn.Module):
     def __init__(self):
@@ -26,19 +27,22 @@ class Network(nn.Module):
         self.fc2 = nn.Linear(in_features=120, out_features=60)
         self.out = nn.Linear(in_features=60, out_features=10)
 
-    def forward(self,t):
+    def forward(self, t):
         t = F.relu(self.conv1(t))
         # Max pool = pool out the max value at every location
-        t = F.max_pool2d(t, kernel_size=2, stride=2) # Max pool 2d = filter has size of 2, but also the stride of 2
+        t = F.max_pool2d(
+            t, kernel_size=2, stride=2
+        )  # Max pool 2d = filter has size of 2, but also the stride of 2
 
         t = F.relu(self.conv2(t))
         t = F.max_pool2d(t, kernel_size=2, stride=2)
 
-        t = F.relu((self.fc1(t.reshape(-1, 12*4*4))))
+        t = F.relu((self.fc1(t.reshape(-1, 12 * 4 * 4))))
         t = F.relu(self.fc2(t))
         t = self.out(t)
 
         return t
+
 
 # Turn feature off to reduce memory consumption
 torch.set_grad_enabled(False)
@@ -55,19 +59,18 @@ network = Network()
 # print(label)
 
 # Batch Processing
-data_loader = torch.utils.data.DataLoader(
-    train_set,
-    batch_size = 10
-)
+data_loader = torch.utils.data.DataLoader(train_set, batch_size=10)
 
-batch = next(iter(data_loader)) # iter make data into stream of node pair that you can iterate and grab adata
+batch = next(
+    iter(data_loader)
+)  # iter make data into stream of node pair that you can iterate and grab adata
 images, labels = batch
 print(images.shape)
 print(labels.shape)
 
 pred = network(images)
 print(pred)
-print("The predictions are: ",pred.argmax(dim=1))
+print("The predictions are: ", pred.argmax(dim=1))
 print("The labels are: ", labels)
 print("Compare: ", pred.argmax(dim=1).eq(labels))
 print("Total number of equal: ", pred.argmax(dim=1).eq(labels).sum())

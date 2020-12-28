@@ -11,6 +11,7 @@
     7/ Replete 1-6 as many epoch as want ed to obtain the desired level of accuracy (Training loop)
     8/ Building a Confusion Matrix Display
     9/ Work with Tensorboard: Import + SummaryWriter()
+    10/ Build a Training Loop Run Builder Class
 """
 import torch
 import torch.nn as nn
@@ -142,14 +143,6 @@ for lr, batch_size, shuffle in product(*param_values): # * is a special way Pyth
         tb.add_scalar("Number Correct", total_correct, epoch)
         tb.add_scalar("Accuracy", total_correct / len(train_set), epoch)
 
-        # Hard-code histogram for each layer
-        # tb.add_histogram(
-        #     "conv1.bias", network.conv1.bias, epoch
-        # )  # Add a set of value for a histogram
-        # tb.add_histogram("conv1.weight", network.conv1.weight, epoch)
-        # tb.add_histogram("conv1.weight.grad", network.conv1.weight.grad, epoch)
-        ######### tb
-
         # General Code histogram for all layers in the network
         for name, weight in network.named_parameters():
             tb.add_histogram(name, weight, epoch)
@@ -163,75 +156,3 @@ for lr, batch_size, shuffle in product(*param_values): # * is a special way Pyth
 
 print("Accuracy is: ", total_correct / len(train_set))
 
-# ###################################################################################################################
-# # Step 8: Building confusion matrix display
-# # Function take in trained model and make prediction to all input features
-# def get_all_preds(model, loader):
-#     all_preds = torch.tensor([])
-#     for batch in loader: # Can't predict all 60000 images at once
-#         images, labels = batch
-#
-#         preds = model(images)
-#         all_preds = torch.cat((all_preds, preds), dim=0) # add the prediction of 1 batch into the list
-#     return all_preds
-#
-# with torch.no_grad(): # compute without tracking gradient in prediction steps
-#     prediction_loader = torch.utils.data.DataLoader(train_set, batch_size=10000)
-#     train_preds = get_all_preds(network, prediction_loader) # Should be [60000,10]
-#
-# preds_correct = get_num_correct(train_preds, train_set.targets)
-#
-# print("Total correct: ", preds_correct)
-# print("Accuracy: ", preds_correct/len(train_set))
-#
-# # Building the confusion matrix by pairing elementwise training labels with prediction argmax
-# stacked = torch.stack(
-#     (
-#         train_set.targets,
-#         train_preds.argmax(dim=1)
-#     ),
-#     dim=1
-# )
-#
-# print(stacked) # For debugging
-#
-# cmt = torch.zeros(10,10, dtype=torch.int32) # Building an empty confusion matrix
-#
-# for p in stacked:
-#     label,prediction = p.tolist()
-#     cmt[label,prediction] = cmt[label,prediction] + 1
-#
-# print("The confusion matrix is: \n", cmt)
-#
-# # Plotting with mpl
-# cm = confusion_matrix(train_set.targets, train_preds.argmax(dim=1))
-# print(type(cm))
-# print(cm)
-#
-# names = ('T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal','Shirt', 'Sneaker', 'Bag', 'Ankle Boots')
-# plt.figure(figsize=(10,10))
-# plot_confusion_matrix(cm, names)
-
-# ###################################################################################################################
-# # Step 9: Using Tensorboard - just for showing images on tensorboard only
-# tb = SummaryWriter()
-#
-# network = Network()
-# images, labels = next(iter(train_loader))
-# grid = torchvision.utils.make_grid(images)
-#
-# tb.add_image('images', grid)
-# tb.add_graph(network, images)
-# tb.close()
-
-###################################################################################################################
-# Used when calculate 1 batch
-# print("Before the optimizer is used, altho we update the weights, the loss is still the same:")
-# print(loss.item()) # Loss cross entropy
-# print(get_num_correct(preds, labels)) # return the percentage of correct
-#
-# optimizer.step() # update the weight, step in direction of the loss function to minimum
-# preds = network(images) # Calculate the prediction again
-# new_loss = F.cross_entropy(preds, labels)
-# print(new_loss.item())
-# print(get_num_correct(preds,labels)) # percentage of getting correct image 15/100, note this is just 1 batch, 100 samples form 60000 samples.
